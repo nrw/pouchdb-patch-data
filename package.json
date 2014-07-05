@@ -1,7 +1,7 @@
 {
   "name": "pouchdb-patch-data",
   "description": "Store and read object patches (with metadata) in insert order",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/nrw/pouchdb-patch-data.git"
