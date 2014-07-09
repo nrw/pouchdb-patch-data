@@ -15,8 +15,8 @@
     "xtend": "~3.0.0"
   },
   "devDependencies": {
-    "memdown": "^0.10.2",
-    "pouchdb": "^2.2.3",
+    "memdown": "~0.10.2",
+    "pouchdb": "~2.2.3",
     "tape": "2.x.x"
   },
   "homepage": "https://github.com/nrw/pouchdb-patch-data",
