@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "monotonic-timestamp": "0.0.8",
+    "push-queue": "^0.1.1",
     "xtend": "~3.0.0"
   },
   "devDependencies": {

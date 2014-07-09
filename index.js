@@ -1,22 +1,26 @@
 var extend = require('xtend')
+var Queue = require('push-queue')
 var monotonic = require('monotonic-timestamp')
 
 module.exports = function (db, opts) {
   opts = opts || {}
-  opts.separator = opts.separator || '\xff'
-  opts.timestampField = opts.timestampField || 'ts'
-  opts.keyField = opts.keyField || '_id'
   opts.patchField = opts.patchField || 'patch'
-  opts.key = opts.key || function (meta, namespace, opts) {
-    return [namespace, meta[opts.timestampField]].join(opts.separator)
-  }
+  opts.namespaceField = opts.namespaceField || 'namespace'
+
+  var enqueue = Queue(function (item, callback) {
+    db.put(item.value, function (err) {
+      item.callback(err, item.value)
+      callback()
+    })
+  })
 
   return {
     addPatch: addPatch,
     add: addPatch,
     patches: patches,
     get: patches,
-    getPatches: patches
+    getPatches: patches,
+    init: init
   }
 
   function addPatch (namespace, patch, meta, cb) {
@@ -25,18 +29,16 @@ module.exports = function (db, opts) {
       meta = {}
     }
 
-    var props = {}
-    meta = ts(meta, opts.timestampField)
+    var props = {
+      _id: monotonic().toString(36)
+    }
 
-    props[opts.keyField] = opts.key(meta, namespace, opts)
+    props[opts.namespaceField] = namespace
     props[opts.patchField] = patch
 
     var value = extend(meta, props)
 
-    db.put(value, function (err) {
-      if (err) return cb(err)
-      cb(null, value)
-    })
+    enqueue({value: value, callback: cb})
   }
 
   function patches (namespace, start, cb) {
@@ -46,21 +48,43 @@ module.exports = function (db, opts) {
     }
 
     var query = {
-      startkey: (start || namespace + opts.separator) + '\x00',
-      endkey: namespace + opts.separator + '\xff',
       include_docs: true
     }
 
-    db.allDocs(query, function (err, res) {
+    if (start) {
+      query.startkey = [namespace, start]
+      query.endkey = [namespace, {}]
+      query.skip = 1
+    } else {
+      query.startkey = [namespace]
+      query.endkey = [namespace, {}]
+    }
+
+    db.query('patches/by_namespace', query, function (err, res) {
+      // console.log('err', err, res)
       if (err) return cb(err)
 
       cb(null, res.rows.map(function (row) { return row.doc }))
     })
   }
-}
 
-function ts (meta, field) {
-  var obj = {}
-  obj[field] = monotonic()
-  return extend(meta, obj)
+  function init (cb) {
+    var design = {
+      _id: '_design/patches',
+      views: {
+        by_namespace: {
+          map: 'function (doc) {' +
+            'if (doc.namespace) emit([doc.namespace, doc._id], null)' +
+          '}'
+        }
+      }
+    }
+    db.get(design._id, function (err, res) {
+      if (err && err.status !== 404) return cb(err)
+
+      if (res && res._rev) design._rev = res._rev
+
+      db.put(design, cb)
+    })
+  }
 }

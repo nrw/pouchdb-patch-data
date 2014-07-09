@@ -14,18 +14,23 @@ var Patch = require('pouchdb-patch-data')
 var db = Pouchdb('patch-test')
 var patch = Patch(db)
 
-patch.add('doc', {a: 'a'}, {user: 'lee'}, function (err, commit) {
-  patch.add('doc', {b: 'c'}, {user: 'kara'}, function (err, commit) {
-
-    patch.get('doc', function (body) {
-      // body is
-      [ { ts: '2014-06-28T06:05:53.100Z', // timestamp
-          patch: { a: 'a' },
-          _id: 'docÿ2014-06-28T06:05:53.100Z' }, // namespaced and sorted by ts
-        { user: 'lee',
-          ts: '2014-06-28T06:05:53.113Z',
-          patch: { b: 'c' },
-          _id: 'docÿ2014-06-28T06:05:53.113Z' } ]
+// you only need to call init() once per database to put a design doc.
+patch.init(function () {
+  patch.add('doc', {a: 'a'}, {user: 'lee'}, function (err, commit) {
+    patch.add('doc', {b: 'c'}, {user: 'kara'}, function (err, commit) {
+      patch.get('doc', function (body) {
+        // body is
+        [ { user: 'lee',
+            namespace: 'doc',
+            patch: { a: 'a' },
+            _id: 'hxeapjxc', // namespaced and sorted by ts
+            _rev: '1-92e0f5bd431fb35aef6dbcc509e07732' },
+          { user: 'kara',
+            namespace: 'doc',
+            patch: { b: 'c' },
+            _id: 'hxeapjyi',
+            _rev: '1-66ca124e82aecce68d0a3a3a25ccb6d6' } ]
+      })
     })
   })
 })
@@ -38,22 +43,13 @@ See tests for more examples.
 ### var patch = Patch(db, opts)
 
 - `db`: an instance of `pouchdb` to store patches and data.
-- `opts.separator`: the string to use as a separator for key fields. default:
-  `'\xff'`
-- `opts.timestampField`: the field to use to store the `timestamp`. default:
-  `ts`
-- `opts.keyField`: the field to use to store the `key`. default: `_id`
+- `opts.namespaceField`: the field to use to store the `namespace`. default:
+  `namespace`
 - `opts.patchField`: the field to use to store the `patch`. default: `patch`
-- `opts.key`: the function to use to generate each patch's key. Use a custom
-  key to add some entropy if there is a chance you'll have two commits in the
-  same millisecond.
 
-  ```js
-  // default
-  opts.key = function (meta, namespace, opts) {
-    return [namespace, meta[opts.timestampField]].join(opts.separator)
-  }
-  ```
+### patch.init(callback)
+
+Installs a design doc used for queries. Callback is called with any error.
 
 ### patch.add(namespace, patch, meta, callback)
 
@@ -77,8 +73,8 @@ Callback is called with any error and a list of commits in insert order.
 
 - `namespace`: the collection of patches to read. patches will be streamed in
   the order inserted.
-- `since`: optional. pass the `key` of the commit to read commits since. The
-  commit with `key === since` will not be returned, only all commits after it.
+- `since`: optional. pass the `_id` of the commit to read commits since. The
+  commit with `_id === since` will not be returned, only all commits after it.
 
 ## License
 
