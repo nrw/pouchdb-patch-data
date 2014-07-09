@@ -40,5 +40,8 @@
       "opera/latest",
       "safari/latest"
     ]
+  },
+  "engines": {
+    "npm": "> 1.4.0"
   }
 }
