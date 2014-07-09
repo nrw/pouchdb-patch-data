@@ -1,4 +1,5 @@
 var extend = require('xtend')
+var monotonic = require('monotonic-timestamp')
 
 module.exports = function (db, opts) {
   opts = opts || {}
@@ -24,8 +25,8 @@ module.exports = function (db, opts) {
       meta = {}
     }
 
-    var meta = ts(meta, opts.timestampField)
     var props = {}
+    meta = ts(meta, opts.timestampField)
 
     props[opts.keyField] = opts.key(meta, namespace, opts)
     props[opts.patchField] = patch
@@ -60,6 +61,6 @@ module.exports = function (db, opts) {
 
 function ts (meta, field) {
   var obj = {}
-  obj[field] = new Date().toISOString()
+  obj[field] = monotonic()
   return extend(meta, obj)
 }

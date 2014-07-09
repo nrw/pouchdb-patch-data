@@ -126,6 +126,28 @@ test('get since commit id', function (t) {
   })
 })
 
+test('order check: fill', function (t) {
+  t.plan(1000)
+  i = 0
+  while (i < 1000) {
+    patch.add('doc4', {i: i}, noErr)
+    i++
+  }
+
+  function noErr (err) { t.error(err) }
+})
+
+test('order check: sync', function (t) {
+  patch.patches('doc3', function (err, body) {
+    t.error(err, 'no err')
+
+    var copy = body.slice(0)
+    copy.sort(function (a, b) { return b.i - a.i })
+    t.same(body, copy)
+    t.end()
+  })
+})
+
 test('teardown', function (t) {
   Pouch.destroy('patch-data', t.end)
 })
