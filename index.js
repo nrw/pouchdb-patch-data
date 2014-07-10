@@ -61,7 +61,6 @@ module.exports = function (db, opts) {
     }
 
     db.query('patches/by_namespace', query, function (err, res) {
-      // console.log('err', err, res)
       if (err) return cb(err)
 
       cb(null, res.rows.map(function (row) { return row.doc }))
