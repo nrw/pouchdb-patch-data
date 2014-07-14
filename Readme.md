@@ -14,23 +14,21 @@ var Patch = require('pouchdb-patch-data')
 var db = Pouchdb('patch-test')
 var patch = Patch(db)
 
-// you only need to call init() once per database to put a design doc.
-patch.init(function () {
-  patch.add('doc', {a: 'a'}, {user: 'lee'}, function (err, commit) {
-    patch.add('doc', {b: 'c'}, {user: 'kara'}, function (err, commit) {
-      patch.get('doc', function (body) {
-        // body is
-        [ { user: 'lee',
-            namespace: 'doc',
-            patch: { a: 'a' },
-            _id: 'hxeapjxc', // namespaced and sorted by ts
-            _rev: '1-92e0f5bd431fb35aef6dbcc509e07732' },
-          { user: 'kara',
-            namespace: 'doc',
-            patch: { b: 'c' },
-            _id: 'hxeapjyi',
-            _rev: '1-66ca124e82aecce68d0a3a3a25ccb6d6' } ]
-      })
+patch.add('doc', {a: 'a'}, {user: 'lee'}, function (err, commit) {
+  patch.add('doc', {b: 'c'}, {user: 'kara'}, function (err, commit) {
+    patch.get('doc', function (body) {
+      // body is
+      [ { user: 'lee',
+          namespace: 'doc',
+          patch: { a: 'a' },
+          // _id is namespaced and sorted by timestamp
+          _id: 'a070646f6335007068786c38693434352e30366274390000',
+          _rev: '1-92e0f5bd431fb35aef6dbcc509e07732' },
+        { user: 'kara',
+          namespace: 'doc',
+          patch: { b: 'c' },
+          _id: 'a070646f6335007068786c38693434352e30376c64690000',
+          _rev: '1-66ca124e82aecce68d0a3a3a25ccb6d6' } ]
     })
   })
 })
@@ -47,10 +45,6 @@ See tests for more examples.
   `namespace`
 - `opts.patchField`: the field to use to store the `patch`. default: `patch`
 
-### patch.init(callback)
-
-Installs a design doc used for queries. Callback is called with any error.
-
 ### patch.add(namespace, patch, meta, callback)
 
 alias: `addPatch`
@@ -60,7 +54,7 @@ alias: `addPatch`
   patches for a single object per unique `namespace`
 - `patch`: the object to store as the patch
 - `meta`: key/value pairs to store with this patch. Note: the keys
-  `opts.timestampField`, `opts.keyField`, and `opts.patchField` will be
+  `opts.namespaceField`, and `opts.patchField` will be
   overwritten if set.
 - `callback`: receives two arguments, `err` which is only set if an error occurs
   and `commit`, which is the patch and its metadata exactly as it was saved.

@@ -9,7 +9,7 @@ test('setup', function (t) {
     t.error(err)
     db = Pouch('patch-data')
     patch = Patch(db)
-    patch.init(t.end)
+    t.end()
   })
 })
 
@@ -62,7 +62,6 @@ test('multiple docs do not clash', function (t) {
 
     patch.patches('doc1', function (err, body) {
       t.error(err)
-      console.log(body)
       t.same(body.length, 2, 'correct number of patches')
       t.same(body[0].patch, {a: 'b'}, 'correct patches')
       t.ok(body[0]._id, 'has _id')
@@ -97,18 +96,40 @@ test('get since commit id', function (t) {
 })
 
 test('order check: fill', function (t) {
-  t.plan(1000)
-  i = 0
-  while (i < 1000) {
-    patch.add('doc4', {i: i}, noErr)
-    i++
-  }
+  t.plan(2000)
+
+  setTimeout(function () {
+    var i = 0
+    while (i < 1000) {
+      patch.add('doc4', {i: i}, noErr)
+      i++
+    }
+  }, 0)
+
+  setTimeout(function () {
+    var i = 0
+    while (i < 1000) {
+      patch.add('doc5', {i: i}, noErr)
+      i++
+    }
+  }, 0)
 
   function noErr (err) { t.error(err) }
 })
 
 test('order check: sync', function (t) {
   patch.patches('doc4', function (err, body) {
+    t.error(err, 'no err')
+    t.equal(body.length, 1000)
+    var copy = body.slice(0)
+    copy.sort(function (a, b) { return a.patch.i - b.patch.i })
+    t.same(body, copy)
+    t.end()
+  })
+})
+
+test('order check: sync', function (t) {
+  patch.patches('doc5', function (err, body) {
     t.error(err, 'no err')
     t.equal(body.length, 1000)
     var copy = body.slice(0)

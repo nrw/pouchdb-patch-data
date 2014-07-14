@@ -1,4 +1,5 @@
 var extend = require('xtend')
+var bytewise = require('bytewise')
 var Queue = require('push-queue')
 var monotonic = require('monotonic-timestamp')
 
@@ -19,8 +20,7 @@ module.exports = function (db, opts) {
     add: addPatch,
     patches: patches,
     get: patches,
-    getPatches: patches,
-    init: init
+    getPatches: patches
   }
 
   function addPatch (namespace, patch, meta, cb) {
@@ -30,7 +30,7 @@ module.exports = function (db, opts) {
     }
 
     var props = {
-      _id: monotonic().toString(36)
+      _id: encode([namespace, monotonic().toString(36)])
     }
 
     props[opts.namespaceField] = namespace
@@ -52,38 +52,26 @@ module.exports = function (db, opts) {
     }
 
     if (start) {
-      query.startkey = [namespace, start]
-      query.endkey = [namespace, {}]
+      query.startkey = start
+      query.endkey = encode([namespace, {}])
       query.skip = 1
     } else {
-      query.startkey = [namespace]
-      query.endkey = [namespace, {}]
+      query.startkey = encode([namespace])
+      query.endkey = encode([namespace, {}])
     }
 
-    db.query('patches/by_namespace', query, function (err, res) {
+    db.allDocs(query, function (err, res) {
       if (err) return cb(err)
 
       cb(null, res.rows.map(function (row) { return row.doc }))
     })
   }
+}
 
-  function init (cb) {
-    var design = {
-      _id: '_design/patches',
-      views: {
-        by_namespace: {
-          map: 'function (doc) {' +
-            'if (doc.namespace) emit([doc.namespace, doc._id], null)' +
-          '}'
-        }
-      }
-    }
-    db.get(design._id, function (err, res) {
-      if (err && err.status !== 404) return cb(err)
+function encode (arr) {
+  return bytewise.encode(arr).toString('hex')
+}
 
-      if (res && res._rev) design._rev = res._rev
-
-      db.put(design, cb)
-    })
-  }
+function decode (str) {
+  return bytewise.decode(new Buffer(str, 'hex'))
 }

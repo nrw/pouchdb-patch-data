@@ -8,12 +8,14 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "tape test/*.js"
+    "test": "tape test/*.js",
+    "watch": "nodemon -q -x 'tape test/*.js' | tap-colorize"
   },
   "dependencies": {
     "monotonic-timestamp": "0.0.8",
     "push-queue": "^0.1.1",
-    "xtend": "~3.0.0"
+    "xtend": "~3.0.0",
+    "bytewise": "~0.7.0"
   },
   "devDependencies": {
     "memdown": "~0.10.2",
