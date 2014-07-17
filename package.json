@@ -15,7 +15,7 @@
     "monotonic-timestamp": "0.0.8",
     "push-queue": "~0.1.1",
     "xtend": "~3.0.0",
-    "bytewise": "~0.7.0"
+    "bytewise": "~0.7.1"
   },
   "devDependencies": {
     "memdown": "~0.10.2",
